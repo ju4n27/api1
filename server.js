@@ -1,3 +1,4 @@
+//archivo js "server.js"
 var fs = require('fs');
 
 var data = fs.readFileSync('palabras.json');
