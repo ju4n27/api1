@@ -1,4 +1,5 @@
 //archivo js "server.js"
+//Esto es solo una prueba, a ver si muere la "base de datos"
 var fs = require('fs');
 
 var data = fs.readFileSync('palabras.json');
