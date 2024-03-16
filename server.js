@@ -38,7 +38,7 @@ function mandarTexto(pedido,respuesta){
 }
 
 app.get('/servicio', recibirTexto);
-function recibir(pedido,respuesta){
+function recibirTexto(pedido,respuesta){
     respuesta.json({
        data: DB
     }); 
