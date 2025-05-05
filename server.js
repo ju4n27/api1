@@ -1,45 +1,71 @@
-//archivo js "server.js"
-//Esto es solo una prueba, a ver si muere la "base de datos"
-var fs = require('fs');
-
-var DB = fs.readFileSync('DB.json');
-var textosGuardados = JSON.parse(DB);
-console.log('**Se leyó el archivo JSON**');
-
-var express = require('express');
-var app = express();
 var env = require('dotenv');
 env.config();
-var port = process.env.PORT;
-var server = app.listen(port, escuchando);
 
-function escuchando(){
-    console.log('**Escuchando el puerto 2727**');
-}
-app.use(express.static('website'));
-app.use(express.json({limit:'1mb'}));
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
-app.get('/servicio', mandarTexto);
-function mandarTexto(pedido,respuesta){
-    console.log("** Han mandado algo **");
-    const data = pedido.body;
-    data.tiempoDeLlegada = Date.now();
-    
-    textosGuardados.push(texto);
-    data = JSON.stringify(textosGuardados);
-    fs.writeFile('DB.json', data, terminado);
-    function terminado(){
-        console.log('Se grabó en el archivo JSON');
-    }
-    respuesta.json({
-        status: '**Se pudo mandar!',
-        data: data
+const server = http.createServer((req, res) => {
+  // Ruta para guardar
+  if (req.method === 'POST' && req.url === '/api/guardar') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const data = JSON.parse(body);
+        fs.writeFile('mensaje.txt', data.mensaje, err => {
+          if (err) {
+            res.writeHead(500, { 'Content-Type': 'text/plain' });
+            res.end('Error al guardar');
+          } else {
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.end('Texto guardado con éxito');
+          }
+        });
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('JSON inválido');
+      }
     });
-}
+  }
 
-app.get('/servicio', recibirTexto);
-function recibirTexto(pedido,respuesta){
-    respuesta.json({
-       data: DB
-    }); 
-}
+  // Ruta para leer
+  else if (req.method === 'GET' && req.url === '/api/leer') {
+    fs.readFile('mensaje.txt', 'utf8', (err, data) => {
+      if (err) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Archivo no encontrado');
+      } else {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end(data);
+      }
+    });
+  }
+
+  // Servir HTML y archivos estáticos desde /public
+  else {
+    const filePath = req.url === '/' ? '/index.html' : req.url;
+    const fullPath = path.join(__dirname, 'Publica', filePath);
+    
+    fs.readFile(fullPath, (err, content) => {
+      if (err) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Archivo no encontrado');
+      } else {
+        const ext = path.extname(fullPath);
+        const mime = {
+          '.html': 'text/html',
+          '.js': 'text/javascript',
+          '.css': 'text/css'
+        }[ext] || 'text/plain';
+
+        res.writeHead(200, { 'Content-Type': mime });
+        res.end(content);
+      }
+    });
+  }
+});
+const port = process.env.PORT || 3000;
+server.listen(port, () => {
+  console.log('Servidor corriendo en http://localhost:3000');
+});
