@@ -1,6 +1,3 @@
-var env = require('dotenv');
-env.config();
-
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
