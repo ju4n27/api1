@@ -1,56 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>*Servidor*</title>
+  <meta charset="UTF-8">
+  <title>Guardar y leer texto</title>
 </head>
 <body>
-    <h2>Mandar texto</h2>
-    <label for="texto">Texto a mandar</label><input type="text" name="textoM" id="textoM" value="">
-    <button type="submit" onclick="mandarData()">mandar</button>
+  <h1>Escribe un texto</h1>
+  <textarea id="mensaje" rows="5" cols="40"></textarea><br>
+  <button onclick="enviarTexto()">Guardar</button>
+  <button onclick="leerTexto()">Leer</button>
+  <button onclick="irAlSitio()">Ir al sitio</button>
 
-    <h2>Recibir texto</h2>
-    <button type="submit" onclick="recibirData()">recibir</button>
-    <label for="texto">Texto recibido</label><input type="text" name="textoR" id="textoR" value="">
-    <script>
-    async function mandarData(){
-        console.log("*A ver si podemos mandar esto:*");
-        const textoM= document.getElementById('textoM').value;
-        const data= {dato: textoM};
-        data.tiempoDeMandado= Date.now(); //su timestamp
-        console.log(data);
-        const options= {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-        };
-        try{
-            const respuesta= await fetch('/servicio', options);
-            const json= await respuesta.json();
-            console.log("*Respuesta del servidor*");
-            console.log(json);
-        }
-        catch(err){
-            console.log("ERR**: "+err);
-        }
+  <h2>Texto guardado:</h2>
+  <div id="salida" style="white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;"></div>
+
+  <script>
+    function enviarTexto() {
+      const texto = document.getElementById('mensaje').value;
+
+      fetch('/api/guardar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mensaje: texto })
+      })
+      .then(res => res.text())
+      .then(alert);
     }
-    async function recibirData(){
-        const respuesta= await fetch('/servicio');
-        const json= await respuesta.json();
-        console.log("*Recibi esto:*");
-        console.log(json);
-        let DB= json.data;
-        let N= DB.length;
-        let texto= DB[N-1].dato;
-        let t1= parseInt(DB[N-1].tiempoDeMandado);
-        let t2= parseInt(Date.now());
-        let duracion = t2-t1;
-        document.getElementById('textoR').value= texto;
-        console.log("duracion: "+duracion);
+
+    function leerTexto() {
+      fetch('/api/leer')
+        .then(res => res.text())
+        .then(texto => {
+          document.getElementById('salida').innerText = texto;
+        });
     }
-    </script>
+
+    function irAlSitio() {
+      fetch('/api/leer')
+        .then(res => res.text())
+        .then(texto => {
+          const url = extraerURL(texto);
+          if (url) {
+            window.open(url, '_blank');
+          }
+          else {
+            alert("No se encontró una URL en el texto.");
+          }
+        });
+    }
+
+    // Función para detectar la primera URL en el texto
+    function extraerURL(texto) {
+      const urlRegex = /(https?:\/\/[^\s]+)/;
+      const match = texto.match(urlRegex);
+      if (match) {
+        return match[0];
+      } else {
+        // Verificar si es una URL sin el "http"
+        const noHttpRegex = /www\.[^\s]+/;
+        const noHttpMatch = texto.match(noHttpRegex);
+        if (noHttpMatch) {
+          return `http://${noHttpMatch[0]}`; // Agregar el "http://"
+        }
+      }
+      return null;
+    }
+  </script>
 </body>
 </html>
