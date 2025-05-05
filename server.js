@@ -45,7 +45,7 @@ const server = http.createServer((req, res) => {
   // Servir HTML y archivos estáticos desde /public
   else {
     const filePath = req.url === '/' ? '/index.html' : req.url;
-    const fullPath = path.join(__dirname, 'Publica', filePath);
+    const fullPath = path.join(__dirname, 'website', filePath);
     
     fs.readFile(fullPath, (err, content) => {
       if (err) {
